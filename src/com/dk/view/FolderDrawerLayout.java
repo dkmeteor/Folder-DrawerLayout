@@ -18,6 +18,8 @@ package com.dk.view;
 
 import java.util.List;
 
+import android.animation.TimeInterpolator;
+import android.animation.ValueAnimator;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -48,9 +50,11 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.view.ViewTreeObserver.OnPreDrawListener;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 /**
  * DrawerLayout acts as a top-level container for window content that allows for
@@ -177,6 +181,16 @@ public class FolderDrawerLayout extends ViewGroup {
 
 	private CharSequence mTitleLeft;
 	private CharSequence mTitleRight;
+
+	private final float[] staticVerts = new float[192];
+	private final float[] drawingVerts = new float[192];
+	private TimeInterpolator interpolator = new TimeInterpolator() {
+
+		@Override
+		public float getInterpolation(float input) {
+			return input;
+		}
+	};
 
 	/**
 	 * Listener for monitoring events about drawers.
@@ -1069,8 +1083,11 @@ public class FolderDrawerLayout extends ViewGroup {
 			mInitialMotionY = y;
 			mDisallowInterceptRequested = false;
 			mChildrenCanceledTouch = false;
-			createCache();
-			replaceView();
+
+			// add by Dean Ding
+
+//			createCache();
+//			replaceView();
 			break;
 		}
 
@@ -1873,6 +1890,17 @@ public class FolderDrawerLayout extends ViewGroup {
 		FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -1);
 		left.addView(drawCache, params);
 		drawCache.setMeshVerts(createVerts());
+//		drawCache.setMeshVerts(drawingVerts);
+
+		this.getViewTreeObserver().addOnPreDrawListener(
+				new OnPreDrawListener() {
+
+					@Override
+					public boolean onPreDraw() {
+
+						return false;
+					}
+				});
 
 	}
 
@@ -1899,21 +1927,69 @@ public class FolderDrawerLayout extends ViewGroup {
 		return dest;
 	}
 
-	private float[] createVerts() {
-		float[] result = new float[5 * 5 * 2];
-		for (int i = 0; i < 5; i++)
-			for (int j = 0; j < 10; j++) {
-				if (j % 2 == 0) {
-					result[10*i+j]=j*100;
-				} else {
-					if((j/2)%2==0)
-						result[10*i+j]=i*200;
-					else {
-						result[10*i+j]=(i+1)*200;
-					}
-				}
-			}
+	 private float[] createVerts() {
+	 float[] result = new float[16 * 6 * 2];
+	 for (int i = 0; i < 16; i++)
+	 for (int j = 0; j < 12; j++) {
+	 if (j % 2 == 0) {
+	 result[10 * i + j] = j * 100;
+	 } else {
+	 if ((j / 2) % 2 == 0)
+	 result[12 * i + j] = i * 200;
+	 else {
+	 result[12 * i + j] = (i + 1) * 200;
+	 }
+	 }
+	 }
+	 return result;
+	 }
 
-		return result;
+//	private void createVerts() {
+//		float f1 = this.mDrawingCache.getWidth();
+//		float f2 = this.mDrawingCache.getHeight();
+//		int i = 0;
+//		for (int j = 0; j <= 5; j++) {
+//			float f3 = f2 * j / 5.0F;
+//			for (int k = 0; k <= 15; k++) {
+//				float f4 = f1 * k / 15.0F;
+//				setXY(this.drawingVerts, i, f4, f3);
+//				setXY(this.staticVerts, i, f4, f3);
+//				i++;
+//			}
+//		}
+//	}
+
+	public void setXA(float[] paramArrayOfFloat, int paramInt, float paramFloat) {
+		paramArrayOfFloat[(0 + paramInt * 2)] = paramFloat;
 	}
+
+	public void setXY(float[] paramArrayOfFloat, int paramInt,
+			float paramFloat1, float paramFloat2) {
+		paramArrayOfFloat[(0 + paramInt * 2)] = paramFloat1;
+		paramArrayOfFloat[(1 + paramInt * 2)] = paramFloat2;
+	}
+
+	public void setYA(float[] paramArrayOfFloat, int paramInt, float paramFloat) {
+		paramArrayOfFloat[(1 + paramInt * 2)] = (paramFloat + this.staticVerts[(1 + paramInt * 2)]);
+	}
+
+	private void animateXCoords(View paramView, float paramFloat1, float paramFloat2, int paramInt, float paramFloat3)
+	  {
+	    float f = 1.0F - Math.max(0.001F, paramFloat1) / paramView.getHeight();
+	    float[] arrayOfFloat = new float[2];
+	    arrayOfFloat[0] = (paramFloat2 - f * (paramView.getHeight() / 2.0F));
+	    arrayOfFloat[1] = paramFloat2;
+	    ValueAnimator localValueAnimator = ValueAnimator.ofFloat(arrayOfFloat).setDuration(350L);
+	    
+//	    localValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener(paramInt)
+//	    {
+//	      public void onAnimationUpdate(ValueAnimator paramValueAnimator)
+//	      {
+//	        setXA(drawingVerts, this.val, ((Float)paramValueAnimator.getAnimatedValue()).floatValue());
+//	      }
+//	    });
+	    
+	    localValueAnimator.setInterpolator(interpolator);
+	    localValueAnimator.start();
+	  }
 }

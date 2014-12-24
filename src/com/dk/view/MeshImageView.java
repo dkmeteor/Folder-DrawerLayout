@@ -23,8 +23,8 @@ public class MeshImageView extends View {
 			mPaint = new Paint();
 
 		if (mVerts != null)
-			canvas.drawBitmapMesh(mBitmap, 4, 4, mVerts, 0, null, 0, mPaint);
-//		canvas.drawBitmap(mBitmap, new Matrix(), mPaint);
+			canvas.drawBitmapMesh(mBitmap, 15, 5, mVerts, 0, null, 0, null);
+		// canvas.drawBitmap(mBitmap, new Matrix(), mPaint);
 	}
 
 	public void setImageBitmap(Bitmap bitmap) {
@@ -34,5 +34,8 @@ public class MeshImageView extends View {
 
 	public void setMeshVerts(float[] verts) {
 		mVerts = verts;
+		if (mBitmap != null) {
+			postInvalidate();
+		}
 	}
 }
