@@ -18,13 +18,9 @@ package com.dk.view;
 
 import java.util.List;
 
-import android.animation.TimeInterpolator;
-import android.animation.ValueAnimator;
-import android.app.Fragment;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PixelFormat;
@@ -53,8 +49,6 @@ import android.view.ViewParent;
 import android.view.ViewTreeObserver.OnPreDrawListener;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 /**
  * DrawerLayout acts as a top-level container for window content that allows for
@@ -181,17 +175,9 @@ public class FolderDrawerLayout extends ViewGroup {
 
 	private CharSequence mTitleLeft;
 	private CharSequence mTitleRight;
-
-	private final float[] staticVerts = new float[192];
-	private final float[] drawingVerts = new float[192];
-	private TimeInterpolator interpolator = new TimeInterpolator() {
-
-		@Override
-		public float getInterpolation(float input) {
-			return input;
-		}
-	};
-
+	private CoreCalc mCoreCalc;
+	private View mLeftCache;
+	private MeshImageView  mMeshImageView;
 	/**
 	 * Listener for monitoring events about drawers.
 	 */
@@ -682,6 +668,7 @@ public class FolderDrawerLayout extends ViewGroup {
 		drawerView.offsetLeftAndRight(checkDrawerViewAbsoluteGravity(
 				drawerView, Gravity.LEFT) ? dx : -dx);
 		setDrawerViewOffset(drawerView, slideOffset);
+		
 	}
 
 	/**
@@ -1086,12 +1073,13 @@ public class FolderDrawerLayout extends ViewGroup {
 
 			// add by Dean Ding
 
-//			createCache();
-//			replaceView();
+			 createCache();
+			 replaceView();
 			break;
 		}
 
 		case MotionEvent.ACTION_UP: {
+			revertView();
 			final float x = ev.getX();
 			final float y = ev.getY();
 			boolean peekingOnly = true;
@@ -1116,6 +1104,7 @@ public class FolderDrawerLayout extends ViewGroup {
 		}
 
 		case MotionEvent.ACTION_CANCEL: {
+			revertView();
 			closeDrawers(true);
 			mDisallowInterceptRequested = false;
 			mChildrenCanceledTouch = false;
@@ -1563,6 +1552,13 @@ public class FolderDrawerLayout extends ViewGroup {
 				offset = (float) (width - left) / childWidth;
 			}
 			setDrawerViewOffset(changedView, offset);
+			
+			if(mCoreCalc!=null)
+			{
+				mCoreCalc.createOffsetVerts(offset);
+				mMeshImageView.setMeshVerts(mCoreCalc.getMeshVerts());
+			}
+			
 			changedView.setVisibility(offset == 0 ? INVISIBLE : VISIBLE);
 			invalidate();
 		}
@@ -1879,36 +1875,45 @@ public class FolderDrawerLayout extends ViewGroup {
 		ViewGroup left = (ViewGroup) findDrawerWithGravity(Gravity.LEFT);
 		mDrawingCache = drawViewToBitmap(mDrawingCache, left, left.getWidth(),
 				left.getHeight(), 1, new BitmapDrawable());
+		
+		if(mCoreCalc == null)
+			mCoreCalc=new CoreCalc(left.getWidth(), left.getHeight());
 	}
 
 	private void replaceView() {
 		ViewGroup left = (ViewGroup) findDrawerWithGravity(Gravity.LEFT);
+		mLeftCache = left.getChildAt(0);
 		left.removeAllViews();
-		MeshImageView drawCache = new MeshImageView(getContext());
-		drawCache.setImageBitmap(mDrawingCache);
-		;
+		mMeshImageView = new MeshImageView(getContext());
+		mMeshImageView.setImageBitmap(mDrawingCache);
+		
 		FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -1);
-		left.addView(drawCache, params);
-		drawCache.setMeshVerts(createVerts());
-//		drawCache.setMeshVerts(drawingVerts);
+		left.addView(mMeshImageView, params);
+		mMeshImageView.setMeshVerts(mCoreCalc.createOffsetVerts(1));
 
-		this.getViewTreeObserver().addOnPreDrawListener(
-				new OnPreDrawListener() {
-
-					@Override
-					public boolean onPreDraw() {
-
-						return false;
-					}
-				});
-
+//		mMeshImageView.getViewTreeObserver().addOnPreDrawListener(new OnPreDrawListener() {
+//			
+//			@Override
+//			public boolean onPreDraw() {
+//				
+//				
+//				return false;
+//			}
+//		});
+	}
+	
+	private void revertView()
+	{
+		ViewGroup left = (ViewGroup) findDrawerWithGravity(Gravity.LEFT);
+		left.removeAllViews();
+		left.addView(mLeftCache);
 	}
 
 	public static Bitmap drawViewToBitmap(Bitmap dest, View view, int width,
 			int height, int downSampling, Drawable drawable) {
 		float scale = 1f / downSampling;
 		int heightCopy = view.getHeight();
-		view.layout(0, 0, width, height);
+//		view.layout(0, 0, width, height);
 		int bmpWidth = (int) (width * scale);
 		int bmpHeight = (int) (height * scale);
 		if (dest == null || dest.getWidth() != bmpWidth
@@ -1923,73 +1928,25 @@ public class FolderDrawerLayout extends ViewGroup {
 			c.scale(scale, scale);
 		}
 		view.draw(c);
-		view.layout(0, 0, width, heightCopy);
+//		view.layout(0, 0, width, heightCopy);
 		return dest;
 	}
 
-	 private float[] createVerts() {
-	 float[] result = new float[16 * 6 * 2];
-	 for (int i = 0; i < 16; i++)
-	 for (int j = 0; j < 12; j++) {
-	 if (j % 2 == 0) {
-	 result[10 * i + j] = j * 100;
-	 } else {
-	 if ((j / 2) % 2 == 0)
-	 result[12 * i + j] = i * 200;
-	 else {
-	 result[12 * i + j] = (i + 1) * 200;
-	 }
-	 }
-	 }
-	 return result;
-	 }
-
-//	private void createVerts() {
-//		float f1 = this.mDrawingCache.getWidth();
-//		float f2 = this.mDrawingCache.getHeight();
-//		int i = 0;
-//		for (int j = 0; j <= 5; j++) {
-//			float f3 = f2 * j / 5.0F;
-//			for (int k = 0; k <= 15; k++) {
-//				float f4 = f1 * k / 15.0F;
-//				setXY(this.drawingVerts, i, f4, f3);
-//				setXY(this.staticVerts, i, f4, f3);
-//				i++;
-//			}
-//		}
-//	}
-
-	public void setXA(float[] paramArrayOfFloat, int paramInt, float paramFloat) {
-		paramArrayOfFloat[(0 + paramInt * 2)] = paramFloat;
+	
+	/**
+	 * 
+	 *  f(y)= Asin(x) 
+	 * 
+	 */
+	private float[] createVerts(int width,int height) {
+		float[] result = new float[6*51*2];
+		for (int i = 0; i < 6; i++)
+			for (int j = 0; j < 51; j++) {
+				result[i*102+2*j]=j*width/51f;
+				result[i*102+2*j+1]=i*height/6f + (float)(12f*Math.sin(result[i*102+2*j]/2))   ;
+			}
+		
+		return result;
 	}
 
-	public void setXY(float[] paramArrayOfFloat, int paramInt,
-			float paramFloat1, float paramFloat2) {
-		paramArrayOfFloat[(0 + paramInt * 2)] = paramFloat1;
-		paramArrayOfFloat[(1 + paramInt * 2)] = paramFloat2;
-	}
-
-	public void setYA(float[] paramArrayOfFloat, int paramInt, float paramFloat) {
-		paramArrayOfFloat[(1 + paramInt * 2)] = (paramFloat + this.staticVerts[(1 + paramInt * 2)]);
-	}
-
-	private void animateXCoords(View paramView, float paramFloat1, float paramFloat2, int paramInt, float paramFloat3)
-	  {
-	    float f = 1.0F - Math.max(0.001F, paramFloat1) / paramView.getHeight();
-	    float[] arrayOfFloat = new float[2];
-	    arrayOfFloat[0] = (paramFloat2 - f * (paramView.getHeight() / 2.0F));
-	    arrayOfFloat[1] = paramFloat2;
-	    ValueAnimator localValueAnimator = ValueAnimator.ofFloat(arrayOfFloat).setDuration(350L);
-	    
-//	    localValueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener(paramInt)
-//	    {
-//	      public void onAnimationUpdate(ValueAnimator paramValueAnimator)
-//	      {
-//	        setXA(drawingVerts, this.val, ((Float)paramValueAnimator.getAnimatedValue()).floatValue());
-//	      }
-//	    });
-	    
-	    localValueAnimator.setInterpolator(interpolator);
-	    localValueAnimator.start();
-	  }
 }

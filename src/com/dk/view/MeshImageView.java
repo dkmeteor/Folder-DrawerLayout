@@ -23,8 +23,9 @@ public class MeshImageView extends View {
 			mPaint = new Paint();
 
 		if (mVerts != null)
-			canvas.drawBitmapMesh(mBitmap, 15, 5, mVerts, 0, null, 0, null);
-		// canvas.drawBitmap(mBitmap, new Matrix(), mPaint);
+			canvas.drawBitmapMesh(mBitmap, 50, 5, mVerts, 0, null, 0, null);
+		else
+			canvas.drawBitmap(mBitmap, new Matrix(), mPaint);
 	}
 
 	public void setImageBitmap(Bitmap bitmap) {
