@@ -1557,6 +1557,7 @@ public class FolderDrawerLayout extends ViewGroup {
 			{
 				mCoreCalc.createOffsetVerts(offset);
 				mMeshImageView.setMeshVerts(mCoreCalc.getMeshVerts());
+				mMeshImageView.setShader(mCoreCalc.getShader());
 			}
 			
 			changedView.setVisibility(offset == 0 ? INVISIBLE : VISIBLE);
