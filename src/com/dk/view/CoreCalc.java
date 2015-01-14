@@ -5,7 +5,7 @@ import android.graphics.Shader;
 
 public class CoreCalc {
 	
-	private static final int GRAY=0xc0c0c0;
+	private static final int GRAY=0x444444;
 	private static final int TRANSPARENT=0x00000000;
 	private static int mAlpha = 0xff;
 	
@@ -27,8 +27,8 @@ public class CoreCalc {
 	}
 
 	public float[] createOffsetVerts(float offset) {
-		applyCurveEffect(offset);
-		applyScaleEffect(offset);
+		applyCurveXEffect(offset);
+		applyScaleXEffect(offset);
 		mShader = applyShadow(offset);
 		return meshVerts;
 	}
@@ -45,7 +45,7 @@ public class CoreCalc {
 	 * @param offset
 	 * @return
 	 */
-	private float[] applyCurveEffect(float offset) {
+	private float[] applyCurveXEffect(float offset) {
 		for (int i = 0; i < 6; i++)
 			for (int j = 0; j < 51; j++) {
 				meshVerts[i * 102 + 2 * j] = originVerts[i * 102 + 2 * j];
@@ -57,12 +57,15 @@ public class CoreCalc {
 			}
 		return meshVerts;
 	}
+	
 
-	private float[] applyScaleEffect(float offset) {
+	private float[] applyScaleXEffect(float offset) {
 		for (int i = 0; i < 6; i++)
 			for (int j = 0; j < 51; j++) {
 				meshVerts[i * 102 + 2 * j] = meshVerts[i * 102 + 2 * j]
-						* (0.7f + 0.3f * offset);
+						* (1.0f + 0.0f * offset) ;
+						
+				meshVerts[i * 102 + 2 * j]=(offset) * meshVerts[i * 102 + 2 * j] *	(1+ (meshVerts[i * 102 + 2 * j+1]-1000)*(meshVerts[i * 102 + 2 * j+1]-1000)/10000 /width);
 			}
 		return meshVerts;
 	}
@@ -94,8 +97,12 @@ public class CoreCalc {
 		float p8 = (float) Math.sqrt((Math.PI / 2 + 7 * Math.PI) * 20000);
 		float p9 = (float) Math.sqrt((Math.PI / 2 + 8 * Math.PI) * 20000);
 
-		int gray =  ((int)(mAlpha * (1f - offset)) << 72) & GRAY;
+		int a = 0xff000000;
+		int b = 0xffc0c0c0;
 		
+		int gray =  ((int)(mAlpha * ((1l - offset)*0.9f+0.1f)) << 24) | GRAY;
+		
+		System.out.println("alpha:"+gray);
 		Shader shader = new LinearGradient(0, 0, width, 0, new int[] {
 				gray, TRANSPARENT, gray, TRANSPARENT, gray,
 				TRANSPARENT, gray, TRANSPARENT, gray },
