@@ -18,6 +18,8 @@ package com.dk.view;
 
 import java.util.List;
 
+import com.dk.view.CoreCalc.Direction;
+
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -177,7 +179,8 @@ public class FolderDrawerLayout extends ViewGroup {
 	private CharSequence mTitleRight;
 	private CoreCalc mCoreCalc;
 	private View mLeftCache;
-	private MeshImageView  mMeshImageView;
+	private MeshImageView mMeshImageView;
+
 	/**
 	 * Listener for monitoring events about drawers.
 	 */
@@ -588,7 +591,8 @@ public class FolderDrawerLayout extends ViewGroup {
 			if (mListener != null) {
 				mListener.onDrawerClosed(drawerView);
 			}
-
+			// add by Dean Ding
+			revertView();
 			// Only send WINDOW_STATE_CHANGE if the host has window focus. This
 			// may change if support for multiple foreground windows (e.g. IME)
 			// improves.
@@ -608,6 +612,8 @@ public class FolderDrawerLayout extends ViewGroup {
 			if (mListener != null) {
 				mListener.onDrawerOpened(drawerView);
 			}
+			// add by Dean Ding
+			revertView();
 			sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED);
 		}
 	}
@@ -668,7 +674,7 @@ public class FolderDrawerLayout extends ViewGroup {
 		drawerView.offsetLeftAndRight(checkDrawerViewAbsoluteGravity(
 				drawerView, Gravity.LEFT) ? dx : -dx);
 		setDrawerViewOffset(drawerView, slideOffset);
-		
+
 	}
 
 	/**
@@ -1073,13 +1079,12 @@ public class FolderDrawerLayout extends ViewGroup {
 
 			// add by Dean Ding
 
-			 createCache();
-			 replaceView();
+			createCache();
+			replaceView();
 			break;
 		}
 
 		case MotionEvent.ACTION_UP: {
-			revertView();
 			final float x = ev.getX();
 			final float y = ev.getY();
 			boolean peekingOnly = true;
@@ -1104,7 +1109,6 @@ public class FolderDrawerLayout extends ViewGroup {
 		}
 
 		case MotionEvent.ACTION_CANCEL: {
-			revertView();
 			closeDrawers(true);
 			mDisallowInterceptRequested = false;
 			mChildrenCanceledTouch = false;
@@ -1552,14 +1556,13 @@ public class FolderDrawerLayout extends ViewGroup {
 				offset = (float) (width - left) / childWidth;
 			}
 			setDrawerViewOffset(changedView, offset);
-			
-			if(mCoreCalc!=null)
-			{
-				mCoreCalc.createOffsetVerts(offset);
+
+			if (mCoreCalc != null) {
+				mCoreCalc.createOffsetVerts(offset, mInitialMotionY);
 				mMeshImageView.setMeshVerts(mCoreCalc.getMeshVerts());
 				mMeshImageView.setShader(mCoreCalc.getShader());
 			}
-			
+
 			changedView.setVisibility(offset == 0 ? INVISIBLE : VISIBLE);
 			invalidate();
 		}
@@ -1876,9 +1879,9 @@ public class FolderDrawerLayout extends ViewGroup {
 		ViewGroup left = (ViewGroup) findDrawerWithGravity(Gravity.LEFT);
 		mDrawingCache = drawViewToBitmap(mDrawingCache, left, left.getWidth(),
 				left.getHeight(), 1, new BitmapDrawable());
-		
-		if(mCoreCalc == null)
-			mCoreCalc=new CoreCalc(left.getWidth(), left.getHeight());
+
+		if (mCoreCalc == null)
+			mCoreCalc = new CoreCalc(left.getWidth(), left.getHeight());
 	}
 
 	private void replaceView() {
@@ -1887,34 +1890,43 @@ public class FolderDrawerLayout extends ViewGroup {
 		left.removeAllViews();
 		mMeshImageView = new MeshImageView(getContext());
 		mMeshImageView.setImageBitmap(mDrawingCache);
-		
+
 		FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(-1, -1);
 		left.addView(mMeshImageView, params);
-		mMeshImageView.setMeshVerts(mCoreCalc.createOffsetVerts(1));
+		if (isDrawerOpen(Gravity.LEFT)) {
+			mCoreCalc.setDirection(Direction.LEFT);
+		} else {
+			mCoreCalc.setDirection(Direction.RIGHT);
+		}
 
-//		mMeshImageView.getViewTreeObserver().addOnPreDrawListener(new OnPreDrawListener() {
-//			
-//			@Override
-//			public boolean onPreDraw() {
-//				
-//				
-//				return false;
-//			}
-//		});
+		mMeshImageView.setMeshVerts(mCoreCalc.createOffsetVerts(1,
+				mInitialMotionY));
+
+		// mMeshImageView.getViewTreeObserver().addOnPreDrawListener(new
+		// OnPreDrawListener() {
+		//
+		// @Override
+		// public boolean onPreDraw() {
+		//
+		//
+		// return false;
+		// }
+		// });
 	}
-	
-	private void revertView()
-	{
-		ViewGroup left = (ViewGroup) findDrawerWithGravity(Gravity.LEFT);
-		left.removeAllViews();
-		left.addView(mLeftCache);
+
+	private void revertView() {
+		if (mLeftCache != null && mLeftCache.getParent() == null) {
+			ViewGroup left = (ViewGroup) findDrawerWithGravity(Gravity.LEFT);
+			left.removeAllViews();
+			left.addView(mLeftCache);
+		}
 	}
 
 	public static Bitmap drawViewToBitmap(Bitmap dest, View view, int width,
 			int height, int downSampling, Drawable drawable) {
 		float scale = 1f / downSampling;
 		int heightCopy = view.getHeight();
-//		view.layout(0, 0, width, height);
+		// view.layout(0, 0, width, height);
 		int bmpWidth = (int) (width * scale);
 		int bmpHeight = (int) (height * scale);
 		if (dest == null || dest.getWidth() != bmpWidth
@@ -1929,25 +1941,8 @@ public class FolderDrawerLayout extends ViewGroup {
 			c.scale(scale, scale);
 		}
 		view.draw(c);
-//		view.layout(0, 0, width, heightCopy);
+		// view.layout(0, 0, width, heightCopy);
 		return dest;
-	}
-
-	
-	/**
-	 * 
-	 *  f(y)= Asin(x) 
-	 * 
-	 */
-	private float[] createVerts(int width,int height) {
-		float[] result = new float[6*51*2];
-		for (int i = 0; i < 6; i++)
-			for (int j = 0; j < 51; j++) {
-				result[i*102+2*j]=j*width/51f;
-				result[i*102+2*j+1]=i*height/6f + (float)(12f*Math.sin(result[i*102+2*j]/2))   ;
-			}
-		
-		return result;
 	}
 
 }

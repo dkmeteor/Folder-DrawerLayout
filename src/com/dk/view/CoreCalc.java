@@ -4,14 +4,24 @@ import android.graphics.LinearGradient;
 import android.graphics.Shader;
 
 public class CoreCalc {
-	
-	private static final int GRAY=0x444444;
-	private static final int TRANSPARENT=0x00000000;
+
+	private static final int GRAY = 0x444444;
+	private static final int TRANSPARENT = 0x00000000;
 	private static int mAlpha = 0xff;
-	
+
 	private float[] originVerts = new float[6 * 51 * 2];
 	private float[] meshVerts = new float[6 * 51 * 2];
 	private Shader mShader;
+
+	private Direction mDirection = Direction.RIGHT;
+
+	public enum Direction {
+		LEFT, RIGHT
+	}
+
+	public void setDirection(Direction direction) {
+		mDirection = direction;
+	}
 
 	public Shader getShader() {
 		return mShader;
@@ -26,9 +36,9 @@ public class CoreCalc {
 		originVerts = createOriginVerts();
 	}
 
-	public float[] createOffsetVerts(float offset) {
+	public float[] createOffsetVerts(float offset, float pointerY) {
 		applyCurveXEffect(offset);
-		applyScaleXEffect(offset);
+		applyScaleXEffect(offset, pointerY);
 		mShader = applyShadow(offset);
 		return meshVerts;
 	}
@@ -57,15 +67,39 @@ public class CoreCalc {
 			}
 		return meshVerts;
 	}
-	
 
-	private float[] applyScaleXEffect(float offset) {
+	/**
+	 * WTF
+	 * 
+	 * g(x) = offset * f(x)* (1+ (f(y)-pointerY)^2/10000/width)
+	 * 
+	 * @param offset
+	 * @param pointerY
+	 * @return
+	 */
+	private float[] applyScaleXEffect(float offset, float pointerY) {
 		for (int i = 0; i < 6; i++)
 			for (int j = 0; j < 51; j++) {
+
+				float curveFactor = 0;
+
+				if (offset > 0.85) {
+					curveFactor = (float) (1 + Math.pow(
+							(offset - 0.85f) / 0.3f, 3) * 100f);
+				} else {
+					curveFactor = 1;
+				}
+
+				int direction = mDirection == Direction.LEFT ? -1 : 1;
+				
+				 meshVerts[i * 102 + 2 * j] = meshVerts[i * 102 + 2 * j]
+				 * (0.6f + 0.4f * offset * offset*offset*offset);
+				
 				meshVerts[i * 102 + 2 * j] = meshVerts[i * 102 + 2 * j]
-						* (1.0f + 0.0f * offset) ;
-						
-				meshVerts[i * 102 + 2 * j]=(offset) * meshVerts[i * 102 + 2 * j] *	(1+ (meshVerts[i * 102 + 2 * j+1]-1000)*(meshVerts[i * 102 + 2 * j+1]-1000)/10000 /width);
+						* (1 - direction
+								* (meshVerts[i * 102 + 2 * j + 1] - pointerY)
+								* (meshVerts[i * 102 + 2 * j + 1] - pointerY)
+								/ 10000 / width / curveFactor);
 			}
 		return meshVerts;
 	}
@@ -97,18 +131,14 @@ public class CoreCalc {
 		float p8 = (float) Math.sqrt((Math.PI / 2 + 7 * Math.PI) * 20000);
 		float p9 = (float) Math.sqrt((Math.PI / 2 + 8 * Math.PI) * 20000);
 
-		int a = 0xff000000;
-		int b = 0xffc0c0c0;
-		
-		int gray =  ((int)(mAlpha * ((1l - offset)*0.9f+0.1f)) << 24) | GRAY;
-		
-		System.out.println("alpha:"+gray);
-		Shader shader = new LinearGradient(0, 0, width, 0, new int[] {
-				gray, TRANSPARENT, gray, TRANSPARENT, gray,
-				TRANSPARENT, gray, TRANSPARENT, gray },
-				new float[] { p1 / width, p2 / width, p3 / width, p4 / width,
-						p5 / width, p6 / width, p7 / width, p8 / width,
-						p9 / width }, Shader.TileMode.REPEAT);
+		int gray = ((int) (mAlpha * ((1l - offset) * 0.9f + 0.1f)) << 24)
+				| GRAY;
+
+		Shader shader = new LinearGradient(0, 0, width, 0, new int[] { gray,
+				TRANSPARENT, gray, TRANSPARENT, gray, TRANSPARENT, gray,
+				TRANSPARENT, gray }, new float[] { p1 / width, p2 / width,
+				p3 / width, p4 / width, p5 / width, p6 / width, p7 / width,
+				p8 / width, p9 / width }, Shader.TileMode.REPEAT);
 		return shader;
 	}
 
