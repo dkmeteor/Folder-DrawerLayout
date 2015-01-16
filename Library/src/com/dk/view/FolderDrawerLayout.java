@@ -18,8 +18,6 @@ package com.dk.view;
 
 import java.util.List;
 
-import com.dk.view.CoreCalc.Direction;
-
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Bitmap;
@@ -48,9 +46,10 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
-import android.view.ViewTreeObserver.OnPreDrawListener;
 import android.view.accessibility.AccessibilityEvent;
 import android.widget.FrameLayout;
+
+import com.dk.view.CoreCalc.Direction;
 
 /**
  * DrawerLayout acts as a top-level container for window content that allows for
@@ -1079,8 +1078,8 @@ public class FolderDrawerLayout extends ViewGroup {
 
 			// add by Dean Ding
 
-			createCache();
-			replaceView();
+			if(createCache())
+				replaceView();
 			break;
 		}
 
@@ -1875,13 +1874,21 @@ public class FolderDrawerLayout extends ViewGroup {
 
 	private Bitmap mDrawingCache = null;
 
-	private void createCache() {
+	private boolean createCache() {
 		ViewGroup left = (ViewGroup) findDrawerWithGravity(Gravity.LEFT);
-		mDrawingCache = drawViewToBitmap(mDrawingCache, left, left.getWidth(),
-				left.getHeight(), 1, new BitmapDrawable());
 
-		if (mCoreCalc == null)
-			mCoreCalc = new CoreCalc(left.getWidth(), left.getHeight());
+		if (left.getChildCount() > 0
+				&& !(left.getChildAt(0) instanceof MeshImageView)) {
+			mDrawingCache = drawViewToBitmap(mDrawingCache, left,
+					left.getWidth(), left.getHeight(), 1, new BitmapDrawable());
+
+			if (mCoreCalc == null)
+				mCoreCalc = new CoreCalc(left.getWidth(), left.getHeight());
+			return true;
+		} else {
+			return false;
+		}
+
 	}
 
 	private void replaceView() {
