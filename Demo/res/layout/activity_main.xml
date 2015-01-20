@@ -22,47 +22,63 @@
         <LinearLayout
             android:layout_width="240dp"
             android:layout_height="match_parent"
-            android:background="#ffffff"
+            android:background="#f0f0f0"
             android:orientation="vertical" >
 
-            <ImageView
-                android:id="@+id/head"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_gravity="center_horizontal"
-                android:src="@drawable/charming" />
-
-            <LinearLayout
+            <RelativeLayout
                 android:layout_width="240dp"
-                android:layout_height="match_parent"
-                android:gravity="center_horizontal"
-                android:orientation="vertical" >
+                android:layout_height="180dp" >
 
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="something" />
+                <ImageView
+                    android:layout_width="240dp"
+                    android:layout_height="180dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/bg" />
 
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="something" />
+                <ImageView
+                    android:id="@+id/head"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_centerInParent="true"
+                    android:src="@drawable/charming" />
+            </RelativeLayout>
 
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="something" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="10dp"
+                android:paddingLeft="10dp"
+                android:paddingTop="10dp"
+                android:text="Dean Ding"
+                android:textSize="18sp" />
 
-                <Button
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="something" />
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:background="#c0c0c0" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Now you can more easily understand the code that was changed in a commit, pull request, or review comment.Now you can more easily understand the code that was changed in a commit, pull request, or review comment.Now you can more easily understand the code that was changed in a commit, pull request, or review comment.Now you can more easily understand the code that was changed in a commit, pull request, or review comment.Now you can more easily understand the code that was changed in a commit, pull request, or review comment.Now you can more easily understand the code that was changed in a commit, pull request, or review comment.Now you can more easily understand the code that was changed in a commit, pull request, or review comment.Now you can more easily understand the code that was changed in a commit, pull request, or review comment.Now you can more easily understand the code that was changed in a commit, pull request, or review comment. " />
-            </LinearLayout>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="10dp"
+                android:paddingLeft="10dp"
+                android:paddingTop="10dp"
+                android:text="93440331@qq.com"
+                android:textSize="18sp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1px"
+                android:background="#c0c0c0" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingBottom="10dp"
+                android:paddingLeft="10dp"
+                android:paddingTop="10dp"
+                android:text="https://github.com/dkmeteor/Folder-DrawerLayout"
+                android:textSize="14sp" />
         </LinearLayout>
     </LinearLayout>
 
