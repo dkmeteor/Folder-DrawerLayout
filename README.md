@@ -1,5 +1,5 @@
 # Demo
-
+![Demo](https://raw.githubusercontent.com/dkmeteor/Folder-DrawerLayout/master/gif/Folder-DrawerLayout.gif)
 # How to use
 
 I copied the code of `android.support.v4.widget.DrawerLayout` and add new effects on it.
@@ -66,7 +66,7 @@ example xml:
 #TODO
 
 - I considered the effect is not nature. But I have no idea how to make it more smooth.
-- As soon as I decide how to change it, i will soon make it available for RightDrawer and .
+- As soon as I decide how to change it, I will soon make it available for RightDrawer and .
 
 # License
 Copyright (c) 2015 [Dean Ding](http://dk-exp.com)
